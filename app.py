@@ -13,9 +13,10 @@ DM_TEXT = "Ye raha link: https://your-link.com"
 STORY_REPLY = "Thanks! Details ke liye humara link: https://your-link.com"
 
 def send_dm(recipient, text):
-    requests.post(f"{API}/{IG_ID}/messages",
+    r = requests.post(f"{API}/me/messages",
         params={"access_token": TOKEN},
         json={"recipient": recipient, "message": {"text": text}})
+    print("DM:", r.status_code, r.text)
 
 @app.get("/")
 def home():
@@ -30,6 +31,7 @@ def verify():
 @app.post("/webhook")
 def webhook():
     data = request.json or {}
+    print("EVENT:", data)
     for entry in data.get("entry", []):
         for ch in entry.get("changes", []):
             if ch.get("field") != "comments":
@@ -39,9 +41,10 @@ def webhook():
                 continue
             if KEYWORD in v.get("text", "").lower():
                 cid = v["id"]
-                requests.post(f"{API}/{cid}/replies",
+                r = requests.post(f"{API}/{cid}/replies",
                     params={"access_token": TOKEN},
                     data={"message": PUBLIC_REPLY})
+                print("REPLY:", r.status_code, r.text)
                 send_dm({"comment_id": cid}, DM_TEXT)
         for m in entry.get("messaging", []):
             msg = m.get("message", {})
